@@ -1,0 +1,1 @@
+This repo contains code used to preprocess the c vulnerability dataset to be embedded in the RAG system for the [GenPatch](https://github.com/Davide-Ettori/LLM-Code-Patching) project.
