@@ -1,0 +1,3 @@
+file,snippet
+kek-123-libfind2Ffind_list.c,"			sprintf(nuid, ""%llu"", (Llong)fs->st_uid);"
+kek-123-libfind2Ffind_list.c,"			sprintf(ngid, ""%llu"", (Llong)fs->st_gid);"
