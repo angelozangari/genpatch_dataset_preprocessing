@@ -8,20 +8,15 @@ def extract_snippet_from_file(file, start_line, start_col, end_line, end_col):
 
     snippet = ""
 
-    # we assume cols are 0-indexed, for instance look at ek-123-libfind2Ffind_list.c
+    ## we assume cols are 0-indexed, for instance look at ek-123-libfind2Ffind_list.c
 
-    if start_line == end_line:
-        # add the section of the line (specific)
-        snippet = file_content[start_line-1][start_col : end_col]
-    else:
-        # read first line
-        snippet = file_content[start_line-1][start_col:]
-        for i in range(start_line, end_line-1):
-            # add entire line
-            snippet += file_content[i]
-        # add final line
-        snippet += file_content[end_line-1][:end_col]
-    
+    # initial line is when we first start to extract the snippet
+    # it will either be a set number of lines n or the beginning of the previous function
+    initial_line = start_line - 5
+
+    for i in range (max(0, initial_line), end_line):
+        snippet += file_content[i]
+
     # get file name by removing the part of path before
     file_name = re.search(r'([^/]+)$', file).group(0)
     
@@ -54,21 +49,22 @@ def extract_vuln_code(file):
 
     return snippets # list of dataframes
 
-dataset_path = f'{os.getcwd()}/data/Vulnerable'
-print(dataset_path)
 
-code_snippets = []
+def main():
+    dataset_path = f'{os.getcwd()}/data/Vulnerable'
+    print(dataset_path)
 
-for vuln_c_file in sorted(os.listdir(dataset_path)):
-    vuln_c_file_path = f'{dataset_path}/{vuln_c_file}'
-    if os.path.isfile(vuln_c_file_path) and vuln_c_file.endswith('.c'):
-        vuln_snippets = extract_vuln_code(vuln_c_file_path)
-        code_snippets.extend(vuln_snippets)
+    code_snippets = []
 
-code_dataframes = pd.concat(code_snippets, ignore_index=True)
+    for vuln_c_file in sorted(os.listdir(dataset_path)):
+        vuln_c_file_path = f'{dataset_path}/{vuln_c_file}'
+        if os.path.isfile(vuln_c_file_path) and vuln_c_file.endswith('.c'):
+            vuln_snippets = extract_vuln_code(vuln_c_file_path)
+            code_snippets.extend(vuln_snippets)
 
-code_dataframes.to_csv('output.csv', index=False)
+    code_dataframes = pd.concat(code_snippets, ignore_index=True)
 
-# print dataframes
-#for df in vuln_snippets:
-#    print(df)
+    code_dataframes.to_csv('output.csv', index=False)
+
+if __name__ == '__main__':
+    main()
