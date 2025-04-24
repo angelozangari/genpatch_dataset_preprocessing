@@ -5,7 +5,7 @@ import re
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument('filename')
+    parser.add_argument('--filename', type=str, default=None, help='Select specific .c file to extract')
     return parser.parse_args() 
 
 def extract_snippet_from_file(file, start_line, start_col, end_line, end_col):
@@ -54,7 +54,7 @@ def extract_snippet_from_file(file, start_line, start_col, end_line, end_col):
         'patched_code'      : placeholder,
         'file_name'              : file_name
     }]
-    
+
     return pd.DataFrame(snippet_df)
     
 def extract_vuln_code(file):
