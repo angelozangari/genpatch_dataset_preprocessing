@@ -1,6 +1,12 @@
+import argparse
 import os
 import pandas as pd
 import re
+
+def parse_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('filename')
+    return parser.parse_args() 
 
 def extract_snippet_from_file(file, start_line, start_col, end_line, end_col):
     with open(file, 'r') as f:
@@ -12,15 +18,44 @@ def extract_snippet_from_file(file, start_line, start_col, end_line, end_col):
 
     # initial line is when we first start to extract the snippet
     # it will either be a set number of lines n or the beginning of the previous function
-    initial_line = start_line - 5
+    initial_line = 10
+    #for i in range(initial_line):
 
-    for i in range (max(0, initial_line), end_line):
+    print(f'start_line')
+    for i in range (max(0, start_line - initial_line), end_line):
         snippet += file_content[i]
+
+
+    # collapse multiple spaces or tabs or new lines to 4 spaces
+#    snippet = re.sub(r'[ \t]+', ' ', snippet)
+#    snippet = snippet.replace('[\n]', '    ')
+#    snippet = snippet.replace('[\t]', '    ')
+    
+    # First, collapse multiple spaces or tabs into a single space
+    snippet = re.sub(r'[ \t]+', ' ', snippet)
+
+    # Replace newlines with 4 spaces
+    snippet = snippet.replace('\n', '    ')
+
+    # Replace tabs with 4 spaces
+    snippet = snippet.replace('\t', '    ')
 
     # get file name by removing the part of path before
     file_name = re.search(r'([^/]+)$', file).group(0)
     
-    return pd.DataFrame([{'file': file_name, 'snippet': snippet}])
+    placeholder = 'unused'
+    snippet_df = [{
+        'code'              : snippet,
+        'vulnerable'        : 1,
+        'vulnerability'     : placeholder,
+        'vulnerable_line'   : start_line,
+        'patched_line'      : placeholder,
+        'vulnerable_code'   : snippet,
+        'patched_code'      : placeholder,
+        'file_name'              : file_name
+    }]
+    
+    return pd.DataFrame(snippet_df)
     
 def extract_vuln_code(file):
     # read file
@@ -51,16 +86,28 @@ def extract_vuln_code(file):
 
 
 def main():
-    dataset_path = f'{os.getcwd()}/data/Vulnerable'
+    args = parse_arguments()
+
+    dataset_path = f'{os.getcwd()}/../data/Vulnerable'
     print(dataset_path)
 
     code_snippets = []
 
-    for vuln_c_file in sorted(os.listdir(dataset_path)):
-        vuln_c_file_path = f'{dataset_path}/{vuln_c_file}'
-        if os.path.isfile(vuln_c_file_path) and vuln_c_file.endswith('.c'):
+    if args.filename is None:
+        for vuln_c_file in sorted(os.listdir(dataset_path)):
+            vuln_c_file_path = f'{dataset_path}/{vuln_c_file}'
+            if os.path.isfile(vuln_c_file_path) and vuln_c_file.endswith('.c'):
+                vuln_snippets = extract_vuln_code(vuln_c_file_path)
+                code_snippets.extend(vuln_snippets)
+    else:
+        vuln_c_file_path = f'{dataset_path}/{args.filename}'
+        #print(f'the path is : {vuln_c_file_path}')
+        if os.path.isfile(vuln_c_file_path) and args.filename.endswith('.c'):
             vuln_snippets = extract_vuln_code(vuln_c_file_path)
             code_snippets.extend(vuln_snippets)
+        pd.set_option('display.max_colwidth', None)
+        pd.set_option('display.expand_frame_repr', False)
+        print(f'the snippets are: {code_snippets}')
 
     code_dataframes = pd.concat(code_snippets, ignore_index=True)
 
